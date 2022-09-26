@@ -21,9 +21,8 @@ public class mover : MonoBehaviour
     protected bool strafeRight = false;
     protected bool doJump = false;
 
-    private Vector3 _startPosition;
-
-    private Quaternion _startRotation;
+    private Vector3 _normal;
+    
 
     private SpawnManager _spawnManager;
 
@@ -42,8 +41,7 @@ public class mover : MonoBehaviour
 
     void Start()
     {
-        _startPosition = transform.position;
-        _startRotation = transform.rotation;
+       
 
         _spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
         if (_spawnManager == null)
@@ -68,7 +66,10 @@ public class mover : MonoBehaviour
 
     void  Update()
     {
-        _horizontalKey = Input.GetAxis("Horizontal");
+        float horizontal = Input.GetAxis("Horizontal");
+        
+
+        Move(new Vector3(horizontal, 0, 0));
 
         if (Input.GetKeyDown("space"))
         {
@@ -84,6 +85,18 @@ public class mover : MonoBehaviour
     public void SetSpeed(float speed)
     {
         runSpeed = speed;
+    }
+    public Vector3 Project(Vector3 forward)
+    {
+        return forward - Vector3.Dot(forward, _normal) * _normal;
+    }
+
+    public void Move(Vector3 direction)
+    {
+        Vector3 directionAlongSurface = Project(direction.normalized);
+        Vector3 offset = directionAlongSurface * (runSpeed * Time.deltaTime);
+
+        rb.MovePosition(rb.position + offset + Vector3.forward * runSpeed * Time.deltaTime);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -103,6 +116,13 @@ public class mover : MonoBehaviour
             
         }
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        _normal = collision.contacts[0].normal;
+    }
+
+    
 
     private IEnumerator BlinkCollaider()
     {
@@ -141,7 +161,7 @@ public class mover : MonoBehaviour
     private void FixedUpdate()
     {
         
-        rb.AddForce(0,0,runSpeed * Time.deltaTime);
+       /* rb.AddForce(0,0,runSpeed * Time.deltaTime);*/
         if (runSpeed != 0)
         {
             if(transform.position.z > _count)
@@ -151,9 +171,9 @@ public class mover : MonoBehaviour
             }
                 
         }
-        rb.MovePosition(transform.position + Vector3.forward * runSpeed * Time.deltaTime);
+        //rb.MovePosition(transform.position + Vector3.forward * runSpeed * Time.deltaTime);
 
-        if (_horizontalKey > 0 && transform.position.x < 4.42f)
+        /*if (_horizontalKey > 0 && transform.position.x < 4.42f)
         {
             rb.AddForce(strafeSpeed * Time.deltaTime,0,0,ForceMode.VelocityChange);
         }
@@ -161,7 +181,7 @@ public class mover : MonoBehaviour
         {
             rb.AddForce(-strafeSpeed * Time.deltaTime,0,0,ForceMode.VelocityChange);
         }
-
+       */
         if (doJump && transform.position.y < 0.64)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
